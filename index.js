@@ -12,12 +12,14 @@ const vpcCidrBlock = config.require("vpcCidrBlock");
 
 const publicCidrBlock = config.require("publicCidrBlock");
 
+
 // Setup VPC
 const vpc = new aws.ec2.Vpc("myVpcPulumi", {
     tags: {
         Name: "myVpcPulumi", 
     },
     cidrBlock: vpcCidrBlock
+
 });
 
 // Setup Internet Gateway
@@ -38,6 +40,7 @@ for (let i = 0; i < numSubnets; i++) {
 
 // Specify only the available AZs
 const availableAZs = config.getObject("availableAZs") || [];
+
 
 const subnets = subnetCidrBlocks.map((block, index) => 
     new aws.ec2.Subnet(`mySubnet${index + 1}`, {

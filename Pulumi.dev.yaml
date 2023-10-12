@@ -12,3 +12,4 @@ config:
   subnets: 6  
   vpcCidrBlock: 10.0.0.0/16
   publicCidrBlock: 0.0.0.0/0
+
