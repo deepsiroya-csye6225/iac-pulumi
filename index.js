@@ -3,12 +3,23 @@
 const pulumi = require("@pulumi/pulumi");
 const aws = require("@pulumi/aws");
 
+const config = new pulumi.Config();
+
+const numSubnets = config.getNumber("subnets") || 0;
+
+const vpcCidrBlock = config.require("vpcCidrBlock");
+
+
+const publicCidrBlock = config.require("publicCidrBlock");
+
+
 // Setup VPC
 const vpc = new aws.ec2.Vpc("myVpcPulumi", {
     tags: {
         Name: "myVpcPulumi", 
     },
-    cidrBlock: "10.0.0.0/16"
+    cidrBlock: vpcCidrBlock
+
 });
 
 // Setup Internet Gateway
@@ -19,8 +30,6 @@ const ig = new aws.ec2.InternetGateway("myIgPulumi", {
     vpcId: vpc.id,
 });
 
-// Number of subnets you want
-const numSubnets = 6;
 
 // Calculate the subnet CIDR blocks dynamically
 const subnetCidrBlocks = [];
@@ -30,7 +39,8 @@ for (let i = 0; i < numSubnets; i++) {
 }
 
 // Specify only the available AZs
-const availableAZs = ["us-east-1a", "us-east-1b", "us-east-1c"];
+const availableAZs = config.getObject("availableAZs") || [];
+
 
 const subnets = subnetCidrBlocks.map((block, index) => 
     new aws.ec2.Subnet(`mySubnet${index + 1}`, {
@@ -51,7 +61,7 @@ const publicRt = new aws.ec2.RouteTable("publicRt", {
         Name: "publicRtPulumi", 
     },
     routes: [{
-        cidrBlock: "0.0.0.0/0",
+        cidrBlock: publicCidrBlock,
         gatewayId: ig.id,
     }],
 });

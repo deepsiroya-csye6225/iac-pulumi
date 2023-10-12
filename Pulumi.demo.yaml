@@ -4,3 +4,11 @@ config:
   aws:region: us-east-1
   aws:secretKey:
     secure: v1:szpEc74jh6DC69Ze:sxm+pXBOCvNkiArM0MPQGOTYSKkkPFpY0vDaMoNir1Euxd2pYavVuk/e2W684Fm/eHb8jM2ITSc=
+  iac-pulumi:availableAZs:
+    - "us-east-1a"
+    - "us-east-1b"
+    - "us-east-1c"
+  iac-pulumi:vpcCidr: 10.0.0.0/16
+  subnets: 6  
+  vpcCidrBlock: 10.0.0.0/16
+  publicCidrBlock: 0.0.0.0/0
