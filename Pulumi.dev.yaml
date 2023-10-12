@@ -4,3 +4,11 @@ config:
   iac-pulumi:myconfigkey: AKIAUPU62HFH5MIYWDS3
   iac-pulumi:mysecretconfigkey:
     secure: v1:T35A5yFTYnEWm5MQ:C193UA8hsJk5hKgahSbaDK0eWmC9DQZT8m52fM2JrmsxFTP3Ku/RhJVk6ioOZ3c08Uq/17AJRg==
+  iac-pulumi:availableAZs:
+    - "us-east-1a"
+    - "us-east-1b"
+    - "us-east-1c"
+  iac-pulumi:vpcCidr: 10.0.0.0/16
+  subnets: 6  
+  vpcCidrBlock: 10.0.0.0/16
+  publicCidrBlock: 0.0.0.0/0
