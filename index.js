@@ -174,4 +174,3 @@ aws.getAvailabilityZones().then(availableZones => {
     exports.resources = resources;
 });
 
-
