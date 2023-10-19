@@ -1,15 +1,10 @@
 encryptionsalt: v1:3M3RkKgMBjk=:v1:1x9MoHb0OT5TXZS4:3ak2xChIEOX3GYPwxrbic2Ubuo2zDw==
 config:
   aws:region: us-east-1
-  iac-pulumi:myconfigkey: AKIAUPU62HFH5MIYWDS3
-  iac-pulumi:mysecretconfigkey:
-    secure: v1:T35A5yFTYnEWm5MQ:C193UA8hsJk5hKgahSbaDK0eWmC9DQZT8m52fM2JrmsxFTP3Ku/RhJVk6ioOZ3c08Uq/17AJRg==
-  iac-pulumi:availableAZs:
-    - "us-east-1a"
-    - "us-east-1b"
-    - "us-east-1c"
+  iac-pulumi:publicCidrBlock: 0.0.0.0/0
   iac-pulumi:vpcCidr: 10.0.0.0/16
-  subnets: 6  
-  vpcCidrBlock: 10.0.0.0/16
-  publicCidrBlock: 0.0.0.0/0
-
+  iac-pulumi:vpcCidrBlock: 10.0.0.0/16
+  ec2Keypair: webapp_pulumi
+  ami_id: "ami-010e80fb0b11887d8"
+  ebsVolSize: 25
+  ebsVolType: "gp2"
