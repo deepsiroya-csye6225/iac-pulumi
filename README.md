@@ -1,4 +1,4 @@
-# AWS Infrastructure Setup with Pulumi IAC
+# AWS Infrastructure Setup with Pulumi IAC Final
 
 This project uses Pulumi to set up AWS networking resources, including a Virtual Private Cloud (VPC), subnets, and route tables. It also configures an Internet Gateway for internet connectivity. 
 
