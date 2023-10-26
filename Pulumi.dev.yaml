@@ -4,7 +4,13 @@ config:
   iac-pulumi:publicCidrBlock: 0.0.0.0/0
   iac-pulumi:vpcCidr: 10.0.0.0/16
   iac-pulumi:vpcCidrBlock: 10.0.0.0/16
-  ec2Keypair: webapp_pulumi
-  ami_id: "ami-010e80fb0b11887d8"
-  ebsVolSize: 25
-  ebsVolType: "gp2"
+  iac-pulumi:ec2Keypair: webapp_pulumi
+  iac-pulumi:ami_id: "ami-047f8e71fb9075db9"
+  iac-pulumi:ebsVolSize: 25
+  iac-pulumi:ebsVolType: "gp2"
+  iac-pulumi:engine: "mariadb"
+  iac-pulumi:dbname: "csye6225"
+  iac-pulumi:identifier: "csye6225"
+  iac-pulumi:username: "csye6225"
+  iac-pulumi:instanceClass: "db.t2.micro"
+  iac-pulumi:password: "DeppSiroya5987"
