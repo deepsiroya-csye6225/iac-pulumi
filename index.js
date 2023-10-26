@@ -2,10 +2,15 @@ const pulumi = require("@pulumi/pulumi");
 const aws = require("@pulumi/aws");
 
 const config = new pulumi.Config();
-const publicCidrBlock = config.require("publicCidrBlock");
 const vpcCidrBlock = config.require("vpcCidrBlock");
 const ebsVolSize = config.require("ebsVolSize");
 const ebsVolType = config.require("ebsVolType");
+const engine = config.require("engine");
+const dbname = config.require("dbname");
+const identifier = config.require("identifier");
+const username = config.require("username");
+const instanceClass = config.require("instanceClass");
+const password = config.require("password");
 
 const ec2Keypair = config.require("ec2Keypair");
 
@@ -154,12 +159,99 @@ aws.getAvailabilityZones().then(availableZones => {
         ],
     });
 
+
+    // Database Security Group
+    const dbSecurityGroup = new aws.ec2.SecurityGroup("dbSecurityGroup", {
+        vpcId: vpc.id,
+        description: "Security group for RDS instances",
+        tags: {
+            Name: "dbSG",
+        },
+        egress: [
+            { protocol: "-1", fromPort: 0, toPort: 0, cidrBlocks: ["0.0.0.0/0"] },
+        ],
+        ingress: [
+            {
+                protocol: "tcp",
+                fromPort: 3306, 
+                toPort: 3306, 
+                securityGroups: [appSecurityGroup.id], 
+            },
+        ],
+    });
+
+// RDS Parameter Group
+    const rdsParameterGroup = new aws.rds.ParameterGroup("rdsParameterGroup", {
+        family: "mariadb10.6", 
+        description: "Parameter group for RDS instances",
+        parameters: [
+            {
+                name: "character_set_client", 
+                value: "utf8",
+            },
+        ],
+        name: "my-rds-parameter-group",
+    });
+
+    const privateSubnets = resources.subnets.filter((_, index) => index % 2 !== 0);
+
+    const rdsSubnetGroup = new aws.rds.SubnetGroup("my-rds-subnet-group", {
+        subnetIds: privateSubnets,
+        tags: {
+            Name: "myRDSDBSubnetGroup",
+        },
+    });
+
+    // const rdsSubnetGroup = new aws.rds.SubnetGroup("my-rds-subnet-group", {
+    //     subnetIds: [resources.subnets[1], resources.subnets[3]], // Use the correct index for your private subnet
+    //     tags: {
+    //         Name: "myRDSDBSubnetGroup",
+    //     },
+    // });
+    
+
+    // Create an RDS Instance
+    const rdsInstance = new aws.rds.Instance("my-rds-instance", {
+        allocatedStorage: 10,
+        storageType: ebsVolType, 
+        dbName: dbname,
+        engine: engine,
+        identifier: identifier,
+        instanceClass: instanceClass, 
+        username: username,
+        password: password,
+        parameterGroupName: rdsParameterGroup.name,
+        vpcSecurityGroupIds: [dbSecurityGroup.id],
+        dbSubnetGroupName: rdsSubnetGroup.name, 
+        publiclyAccessible: false,
+        multiAz: false,
+        skipFinalSnapshot: true,
+        tags: {
+            Name: "myPulumiRDSInstance",
+        },
+    });
+
+    // EC2 User Data
+    const userData = pulumi.all([rdsInstance.endpoint, rdsInstance.dbName, rdsInstance.username, rdsInstance.password]).apply(([endpoint, dbName, username, password]) => {
+        const [hostname] = endpoint.split(":");
+        return `#!/bin/bash
+echo "DB_HOSTNAME=${hostname}" >> /etc/environment
+echo "DB_USER=${username}" >> /etc/environment
+echo "DB_PASSWORD=${password}" >> /etc/environment
+echo "DB_NAME=${dbName}" >> /etc/environment
+sudo systemctl daemon-reload
+sudo systemctl enable node-app.service
+sudo systemctl start node-app.service
+`;
+    });
+
     const instance = new aws.ec2.Instance("myEC2Instance", {
-        ami: ami_id, // Replace with your custom AMI ID
-        instanceType: "t2.micro", // Replace with your desired instance type
+        ami: ami_id, 
+        instanceType: "t2.micro", 
         keyName: ec2Keypair,
-        vpcSecurityGroupIds: [appSecurityGroup.id], // Attach the Application Security Group
-        subnetId: resources.subnets[0], // Choose a public subnet for the EC2 instance
+        vpcSecurityGroupIds: [appSecurityGroup.id], 
+        subnetId: resources.subnets[0], 
+        userData: userData,
         rootBlockDevice: {
             volumeSize: ebsVolSize,
             volumeType: ebsVolType,

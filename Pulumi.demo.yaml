@@ -1,14 +1,16 @@
 encryptionsalt: v1:qgGjotmS7MA=:v1:3VqYdG+aaIPhMlnh:PgMNLqWamfOk1UupXsxn9aDd2u4oEA==
 config:
-  aws:accessKey: AKIA2H3IDAE6CNIUFOER
   aws:region: us-east-1
-  aws:secretKey:
-    secure: v1:szpEc74jh6DC69Ze:sxm+pXBOCvNkiArM0MPQGOTYSKkkPFpY0vDaMoNir1Euxd2pYavVuk/e2W684Fm/eHb8jM2ITSc=
-  iac-pulumi:availableAZs:
-    - "us-east-1a"
-    - "us-east-1b"
-    - "us-east-1c"
+  iac-pulumi:publicCidrBlock: 0.0.0.0/0
   iac-pulumi:vpcCidr: 10.0.0.0/16
-  subnets: 6  
-  vpcCidrBlock: 10.0.0.0/16
-  publicCidrBlock: 0.0.0.0/0
+  iac-pulumi:vpcCidrBlock: 10.0.0.0/16
+  iac-pulumi:ec2Keypair: webapp-demo
+  iac-pulumi:ami_id: "ami-04579a2fd2d43dc6d"
+  iac-pulumi:ebsVolSize: 25
+  iac-pulumi:ebsVolType: "gp2"
+  iac-pulumi:engine: "mariadb"
+  iac-pulumi:dbname: "csye6225"
+  iac-pulumi:identifier: "csye6225"
+  iac-pulumi:username: "csye6225"
+  iac-pulumi:instanceClass: "db.t2.micro"
+  iac-pulumi:password: "DeppSiroya5987"
