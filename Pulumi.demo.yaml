@@ -5,12 +5,14 @@ config:
   iac-pulumi:vpcCidr: 10.0.0.0/16
   iac-pulumi:vpcCidrBlock: 10.0.0.0/16
   iac-pulumi:ec2Keypair: webapp-demo
-  iac-pulumi:ami_id: "ami-04579a2fd2d43dc6d"
+  iac-pulumi:ami_id: ami-0d20a3b582e7402f9
   iac-pulumi:ebsVolSize: 25
-  iac-pulumi:ebsVolType: "gp2"
-  iac-pulumi:engine: "mariadb"
-  iac-pulumi:dbname: "csye6225"
-  iac-pulumi:identifier: "csye6225"
-  iac-pulumi:username: "csye6225"
-  iac-pulumi:instanceClass: "db.t2.micro"
-  iac-pulumi:password: "DeppSiroya5987"
+  iac-pulumi:ebsVolType: gp2
+  iac-pulumi:engine: mariadb
+  iac-pulumi:dbname: csye6225
+  iac-pulumi:identifier: csye6225
+  iac-pulumi:username: csye6225
+  iac-pulumi:instanceClass: db.t2.micro
+  iac-pulumi:password: DeppSiroya5987
+  iac-pulumi:domain_name: ""
+  iac-pulumi:hostedZoneId: Z07020812Z9QZXHVD9EG6

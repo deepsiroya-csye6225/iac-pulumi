@@ -1,5 +1,8 @@
 const pulumi = require("@pulumi/pulumi");
 const aws = require("@pulumi/aws");
+const route53 = require("@pulumi/aws/route53");
+const iam = require("@pulumi/aws/iam");
+const mysql = require("@pulumi/aws/rds");
 
 const config = new pulumi.Config();
 const vpcCidrBlock = config.require("vpcCidrBlock");
@@ -11,6 +14,8 @@ const identifier = config.require("identifier");
 const username = config.require("username");
 const instanceClass = config.require("instanceClass");
 const password = config.require("password");
+const domain_name = config.require("domain_name");
+const hostedZoneId = config.require("hostedZoneId");
 
 const ec2Keypair = config.require("ec2Keypair");
 
@@ -167,9 +172,6 @@ aws.getAvailabilityZones().then(availableZones => {
         tags: {
             Name: "dbSG",
         },
-        egress: [
-            { protocol: "-1", fromPort: 0, toPort: 0, cidrBlocks: ["0.0.0.0/0"] },
-        ],
         ingress: [
             {
                 protocol: "tcp",
@@ -181,7 +183,7 @@ aws.getAvailabilityZones().then(availableZones => {
     });
 
 // RDS Parameter Group
-    const rdsParameterGroup = new aws.rds.ParameterGroup("rdsParameterGroup", {
+    const rdsParameterGroup = new mysql.ParameterGroup("rdsParameterGroup", {
         family: "mariadb10.6", 
         description: "Parameter group for RDS instances",
         parameters: [
@@ -201,13 +203,6 @@ aws.getAvailabilityZones().then(availableZones => {
             Name: "myRDSDBSubnetGroup",
         },
     });
-
-    // const rdsSubnetGroup = new aws.rds.SubnetGroup("my-rds-subnet-group", {
-    //     subnetIds: [resources.subnets[1], resources.subnets[3]], // Use the correct index for your private subnet
-    //     tags: {
-    //         Name: "myRDSDBSubnetGroup",
-    //     },
-    // });
     
 
     // Create an RDS Instance
@@ -231,6 +226,45 @@ aws.getAvailabilityZones().then(availableZones => {
         },
     });
 
+
+    const cloudWatchAgentServerPolicyDoc = pulumi.output(iam.getPolicyDocument({
+        statements: [{
+            actions: ["cloudwatch:PutMetricData",
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:ListMetrics",
+                "ec2:DescribeTags",
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams",
+                "logs:DescribeLogGroups",
+                "logs:CreateLogStream",
+                "logs:CreateLogGroup"],
+            resources: ["*"],
+        }],
+    }));
+
+    const cloudWatchRole = new iam.Role("cloudWatchRole", {
+        assumeRolePolicy: JSON.stringify({
+            Version: "2012-10-17",
+            Statement: [{
+                Action: "sts:AssumeRole",
+                Effect: "Allow",
+                Principal: {
+                    Service: "ec2.amazonaws.com",
+                },
+            }],
+        }),
+        path: "/",
+    });
+
+    const cloudWatchRolePolicy = new iam.RolePolicy("cloudWatchRolePolicy", {
+        role: cloudWatchRole.id,
+        policy: cloudWatchAgentServerPolicyDoc.json,
+    });
+
+    const cloudWatchInstanceProfile = new iam.InstanceProfile("cloudWatchInstanceProfile", {
+        role: cloudWatchRole.name,
+    });
+
     // EC2 User Data
     const userData = pulumi.all([rdsInstance.endpoint, rdsInstance.dbName, rdsInstance.username, rdsInstance.password]).apply(([endpoint, dbName, username, password]) => {
         const [hostname] = endpoint.split(":");
@@ -240,10 +274,15 @@ echo "DB_USER=${username}" >> /etc/environment
 echo "DB_PASSWORD=${password}" >> /etc/environment
 echo "DB_NAME=${dbName}" >> /etc/environment
 sudo systemctl daemon-reload
-sudo systemctl enable node-app.service
-sudo systemctl start node-app.service
+sudo systemctl start node-app
+sudo systemctl enable node-app
+sudo systemctl restart node-app
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent.json -s
+sudo systemctl start amazon-cloudwatch-agent
+sudo systemctl enable amazon-cloudwatch-agent
+sudo systemctl restart amazon-cloudwatch-agent
 `;
-    });
+});
 
     const instance = new aws.ec2.Instance("myEC2Instance", {
         ami: ami_id, 
@@ -252,15 +291,23 @@ sudo systemctl start node-app.service
         vpcSecurityGroupIds: [appSecurityGroup.id], 
         subnetId: resources.subnets[0], 
         userData: userData,
+        iamInstanceProfile: cloudWatchInstanceProfile.name,
         rootBlockDevice: {
             volumeSize: ebsVolSize,
             volumeType: ebsVolType,
-            deleteOnTermination: true,
         },
         disableApiTermination: false,
         tags: {
             Name: "myPulumiEC2Instance",
         },
+    });
+    
+    const aRecord = new route53.Record("webappARecord", {
+        name: domain_name, 
+        type: "A",
+        zoneId: hostedZoneId,
+        records: [instance.publicIp], 
+        ttl: 300,
     });
 
     exports.resources = resources;
