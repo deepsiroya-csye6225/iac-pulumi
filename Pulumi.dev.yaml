@@ -5,7 +5,7 @@ config:
   iac-pulumi:vpcCidr: 10.0.0.0/16
   iac-pulumi:vpcCidrBlock: 10.0.0.0/16
   iac-pulumi:ec2Keypair: webapp_pulumi
-  iac-pulumi:ami_id: ami-0d20a3b582e7402f9
+  iac-pulumi:ami_id: ami-0b5dae0cec15ec8bb
   iac-pulumi:ebsVolSize: 25
   iac-pulumi:ebsVolType: gp2
   iac-pulumi:engine: mariadb
