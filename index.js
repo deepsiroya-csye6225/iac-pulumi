@@ -392,8 +392,8 @@ const aRecord = new route53.Record("aRecord", {
     name: domain_name,
     zoneId: hostedZoneId,
     aliases: [{
-        name: alb .dnsName,
-        zoneId: alb .zoneId,
+        name: alb.dnsName,
+        zoneId: alb.zoneId,
         evaluateTargetHealth: true,
     }],
 });
