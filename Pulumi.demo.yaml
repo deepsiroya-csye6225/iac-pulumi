@@ -1,18 +1,23 @@
 encryptionsalt: v1:qgGjotmS7MA=:v1:3VqYdG+aaIPhMlnh:PgMNLqWamfOk1UupXsxn9aDd2u4oEA==
 config:
   aws:region: us-east-1
+  gcp:project: democloud-406618
+  iac-pulumi:ami_id: ami-049c8858b50375cd6
+  iac-pulumi:dbname: csye6225
+  iac-pulumi:domain_name: ""
+  iac-pulumi:ebsVolSize: "25"
+  iac-pulumi:ebsVolType: gp2
+  iac-pulumi:ec2Keypair: webapp-demo
+  iac-pulumi:engine: mariadb
+  iac-pulumi:hostedZoneId: Z07020812Z9QZXHVD9EG6
+  iac-pulumi:identifier: csye6225
+  iac-pulumi:instanceClass: db.t2.micro
+  iac-pulumi:mailgunApiKey:
+    secure: v1:Jl6dJX0EMUomLT05:aA1MxU0BSHXvZEGHfLbi5Q7nx+qWTc1cOFJJCIYBB5/i7o9XvloA7kX5uGq+z/k0DQML86mcb2DYrSiakjKR73dl
+  iac-pulumi:mailgunDomain: dev.deppcloud.me
+  iac-pulumi:password: DeppSiroya5987
   iac-pulumi:publicCidrBlock: 0.0.0.0/0
+  iac-pulumi:username: csye6225
   iac-pulumi:vpcCidr: 10.0.0.0/16
   iac-pulumi:vpcCidrBlock: 10.0.0.0/16
-  iac-pulumi:ec2Keypair: webapp-demo
-  iac-pulumi:ami_id: ami-0cfe6d39256f43752
-  iac-pulumi:ebsVolSize: 25
-  iac-pulumi:ebsVolType: gp2
-  iac-pulumi:engine: mariadb
-  iac-pulumi:dbname: csye6225
-  iac-pulumi:identifier: csye6225
-  iac-pulumi:username: csye6225
-  iac-pulumi:instanceClass: db.t2.micro
-  iac-pulumi:password: DeppSiroya5987
-  iac-pulumi:domain_name: ""
-  iac-pulumi:hostedZoneId: Z07020812Z9QZXHVD9EG6
+  iac-pulumi:bucketName: assign-submissions-bucket

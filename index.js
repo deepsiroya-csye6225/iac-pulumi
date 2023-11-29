@@ -3,6 +3,7 @@ const aws = require("@pulumi/aws");
 const route53 = require("@pulumi/aws/route53");
 const iam = require("@pulumi/aws/iam");
 const mysql = require("@pulumi/aws/rds");
+const gcp = require("@pulumi/gcp");
 
 const config = new pulumi.Config();
 const vpcCidrBlock = config.require("vpcCidrBlock");
@@ -16,10 +17,17 @@ const instanceClass = config.require("instanceClass");
 const password = config.require("password");
 const domain_name = config.require("domain_name");
 const hostedZoneId = config.require("hostedZoneId");
+const gcpConfig = new pulumi.Config("gcp");
+const projectId = gcpConfig.require("project");
+const bucketName = config.require("bucketName");
+
 
 const ec2Keypair = config.require("ec2Keypair");
 
 const ami_id = config.require("ami_id");
+
+const mailgunApiKey = config.requireSecret("mailgunApiKey");
+const mailgunDomain = config.require("mailgunDomain");
 
 aws.getAvailabilityZones().then(availableZones => {
     const numberOfAZs = availableZones.names.length;
@@ -258,14 +266,135 @@ aws.getAvailabilityZones().then(availableZones => {
         role: cloudWatchRole.name,
     });
 
+    const snsTopic = new aws.sns.Topic("snsTopic");
+
+    const snsPublishPolicy = new aws.iam.Policy("snsPublishPolicy", {
+        description: "Policy to allow publishing to the SNS topic",
+        policy: {
+            Version: "2012-10-17",
+            Statement: [
+                {
+                    Effect: "Allow",
+                    Action: "sns:Publish",
+                    Resource: snsTopic.arn,
+                },
+            ],
+        },
+    });
+    
+    const snsPublishPolicyAttachment = new aws.iam.PolicyAttachment("snsPublishPolicyAttachment", {
+        policyArn: snsPublishPolicy.arn,
+        roles: [cloudWatchRole.name],
+    });
+
+    const bucket = new gcp.storage.Bucket("submissionBucket", {
+        name: bucketName,
+        location: "US",
+        forceDestroy: true,
+    });
+
+    const serviceAccount = new gcp.serviceaccount.Account("myServiceAccount", {
+        accountId: "my-app-service-acc",
+        displayName: "My Service Account",
+    });
+
+    const iamBinding = new gcp.projects.IAMBinding("serviceAccountStorageAdmin", {
+        project: projectId,
+        members: [pulumi.interpolate`serviceAccount:${serviceAccount.email}`],
+        role: "roles/storage.objectAdmin", 
+    });
+    
+
+    const serviceAccountKeys = new gcp.serviceaccount.Key("myServiceAccountKeys", {
+        serviceAccountId: serviceAccount.email,
+    });
+
+    // DynamoDB table creation
+    const dynamoDBTable = new aws.dynamodb.Table("dynamoDBTable", {
+        name: "csye6225-email",
+        attributes: [
+            { name: "email", type: "S" }, 
+        ],
+        hashKey: "email",
+        billingMode: "PAY_PER_REQUEST",
+    });
+
+    const lambdaRole = new aws.iam.Role("lambdaRole", {
+        assumeRolePolicy: JSON.stringify({
+            Version: "2012-10-17",
+            Statement: [{
+                Action: "sts:AssumeRole",
+                Effect: "Allow",
+                Principal: {
+                    Service: "lambda.amazonaws.com",
+                },
+            }],
+        }),
+    });
+
+    const lambdaPolicy = new aws.iam.Policy("lambdaPolicy", {
+        policy: JSON.stringify({
+            Version: "2012-10-17",
+            Statement: [{
+                Action: [
+                    "sns:Publish",
+                    "sns:Subscribe",
+                    "dynamodb:*",
+                    "s3:*",
+                ],
+                Effect: "Allow",
+                Resource: "*",
+            }],
+        }),
+    });
+
+    const lambdaPolicyAttachment = new aws.iam.RolePolicyAttachment("lambdaPolicyAttachment", {
+        role: lambdaRole.name,
+        policyArn: lambdaPolicy.arn,
+    });
+
+    const lambdaFunction = new aws.lambda.Function("myLambdaFunction", {
+        runtime: aws.lambda.Runtime.NodeJS16dX,
+        role: lambdaRole.arn,
+        handler: "index.handler",
+        code: new pulumi.asset.AssetArchive({
+            ".": new pulumi.asset.FileArchive("D:/serverless.zip") 
+        }),
+        timeout: 30,
+        environment: {
+            variables: {
+                GOOGLE_CLOUD_BUCKET: bucket.name,
+                MAILGUN_API_KEY: mailgunApiKey,
+                MAILGUN_DOMAIN: mailgunDomain,
+                DYNAMODB_TABLE_NAME: dynamoDBTable.name,
+                GCP_SERVICE_ACCOUNT_KEY: serviceAccountKeys.privateKey.apply(key => key),
+            },
+        },
+    });
+
+    const lambdaPermission = new aws.lambda.Permission("snsLambdaPermission", {
+        action: "lambda:InvokeFunction",
+        function: lambdaFunction.arn,
+        principal: "sns.amazonaws.com",
+        sourceArn: snsTopic.arn,
+    });
+    
+    // Subscribe Lambda function to SNS topic
+    const snsLambdaSubscription = new aws.sns.TopicSubscription("sns-lambda-subscription", {
+        topic: snsTopic.arn,
+        protocol: "lambda",
+        endpoint: lambdaFunction.arn,
+    });
+
     // EC2 User Data
-    const userData = pulumi.all([rdsInstance.endpoint, rdsInstance.dbName, rdsInstance.username, rdsInstance.password]).apply(([endpoint, dbName, username, password]) => {
+    const userData = pulumi.all([rdsInstance.endpoint, rdsInstance.dbName, rdsInstance.username, rdsInstance.password, snsTopic.arn]).apply(([endpoint, dbName, username, password, snsTopicArn]) => {
         const [hostname] = endpoint.split(":");
         return `#!/bin/bash
 echo "DB_HOSTNAME=${hostname}" >> /etc/environment
 echo "DB_USER=${username}" >> /etc/environment
 echo "DB_PASSWORD=${password}" >> /etc/environment
 echo "DB_NAME=${dbName}" >> /etc/environment
+echo "SNS_TOPIC_ARN=${snsTopicArn}" >> /etc/environment
 sudo systemctl daemon-reload
 sudo systemctl start node-app
 sudo systemctl enable node-app
