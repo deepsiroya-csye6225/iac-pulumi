@@ -3,6 +3,9 @@ config:
   aws:region: us-east-1
   gcp:project: democloud-406618
   iac-pulumi:ami_id: ami-049c8858b50375cd6
+  iac-pulumi:bucketName: assign-submissions-bucket
+  iac-pulumi:cert_domain_name: demo.deppcloud.me
+  iac-pulumi:certificate_arn: arn:aws:acm:us-east-1:704056066364:certificate/181d181f-5f80-4b09-b786-79b198f847b2
   iac-pulumi:dbname: csye6225
   iac-pulumi:domain_name: ""
   iac-pulumi:ebsVolSize: "25"
@@ -13,11 +16,13 @@ config:
   iac-pulumi:identifier: csye6225
   iac-pulumi:instanceClass: db.t2.micro
   iac-pulumi:mailgunApiKey:
-    secure: v1:Jl6dJX0EMUomLT05:aA1MxU0BSHXvZEGHfLbi5Q7nx+qWTc1cOFJJCIYBB5/i7o9XvloA7kX5uGq+z/k0DQML86mcb2DYrSiakjKR73dl
-  iac-pulumi:mailgunDomain: dev.deppcloud.me
+    secure: v1:JH139/aFe7k4zKHO:2fRw3wV9sJZqFOsBB5MK391TnKNbv2GNjXgqDPDTx/7giU5ZpVvpl4AbW57Qcy7TJ7mHcDucLVHz2VsttubqKM1O
+  iac-pulumi:mailgunDomain: deppcloud.me
+  iac-pulumi:myconfigkey: AKIA2H3IDAE6O6LYYQFZ
+  iac-pulumi:mysecretconfigkey:
+    secure: v1:Wg8PNXh6ReyOmAf0:QClnf2oVOg3Hxc4VjmNlWgTNNydmeto/rpSBgD/iOjjXuNUwS/E0WyJtThKvSuaUqgiVybog1+k=
   iac-pulumi:password: DeppSiroya5987
   iac-pulumi:publicCidrBlock: 0.0.0.0/0
   iac-pulumi:username: csye6225
   iac-pulumi:vpcCidr: 10.0.0.0/16
   iac-pulumi:vpcCidrBlock: 10.0.0.0/16
-  iac-pulumi:bucketName: assign-submissions-bucket
