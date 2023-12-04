@@ -16,10 +16,12 @@ const username = config.require("username");
 const instanceClass = config.require("instanceClass");
 const password = config.require("password");
 const domain_name = config.require("domain_name");
+const cert_domain_name = config.require("cert_domain_name");
 const hostedZoneId = config.require("hostedZoneId");
 const gcpConfig = new pulumi.Config("gcp");
 const projectId = gcpConfig.require("project");
 const bucketName = config.require("bucketName");
+const certificate_arn = config.require("certificate_arn");
 
 
 const ec2Keypair = config.require("ec2Keypair");
@@ -156,7 +158,7 @@ aws.getAvailabilityZones().then(availableZones => {
             { protocol: "-1", fromPort: 0, toPort: 0, cidrBlocks: ["0.0.0.0/0"], ipv6CidrBlocks: ["::/0"], },
         ],
         ingress: [
-            { protocol: "tcp", fromPort: 22, toPort: 22, cidrBlocks: ["0.0.0.0/0"] },
+            { protocol: "tcp", fromPort: 443, toPort: 443, securityGroups: [lbSecurityGroup.id] },
             { protocol: "tcp", fromPort: 3000, toPort: 3000, securityGroups: [lbSecurityGroup.id] },
         ],
         tags: {
@@ -509,11 +511,14 @@ const alb  = new aws.lb.LoadBalancer("webappLB", {
 
 const listener = new aws.lb.Listener("webappListener", {
     loadBalancerArn: alb.arn,
-    port: 80,
+    port: 443,
+    protocol: "HTTPS",
     defaultActions: [{
         type: "forward",
         targetGroupArn: targetGrp.arn,
     }],
+    sslPolicy: "ELBSecurityPolicy-2016-08",
+    certificateArn: certificate_arn,
 });
 
 const aRecord = new route53.Record("aRecord", {

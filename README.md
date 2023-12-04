@@ -4,12 +4,13 @@ This project uses Pulumi to set up AWS networking resources, including a Virtual
 
 ## Table of Contents
 
-- [AWS Infrastructure Setup with Pulumi](#aws-infrastructure-setup-with-pulumi)
+- [AWS Infrastructure Setup with Pulumi IAC Final](#aws-infrastructure-setup-with-pulumi-iac-final)
   - [Table of Contents](#table-of-contents)
   - [Project Overview](#project-overview)
   - [Project Structure](#project-structure)
   - [Pulumi Configuration](#pulumi-configuration)
   - [Usage](#usage)
+  - [Command to import SSL certificate from any service to Amazon ACM](#command-to-import-ssl-certificate-from-any-service-to-amazon-acm)
 
 ## Project Overview
 
@@ -62,3 +63,6 @@ Pulumi will create the specified AWS infrastructure based on the provided config
 
 6. When you're done, you can tear down the infrastructure using:
 pulumi destroy
+
+## Command to import SSL certificate from any service to Amazon ACM
+- aws acm import-certificate --certificate fileb://demo_deppcloud_me.crt --private-key fileb://demo_deppcloud_me.key --certificate-chain fileb://deppcloud-ca-bundle.crt --region us-east-1 --profile demo
